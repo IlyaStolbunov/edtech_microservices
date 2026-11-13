@@ -153,7 +153,7 @@ components:
           type: string
           maxLength: 1000
 
-    # Модель ответа (что возвращаем клиенту)
+    # Модель ответа
     ReviewResponse:
       type: object
       properties:
