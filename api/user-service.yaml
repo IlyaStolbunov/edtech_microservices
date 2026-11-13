@@ -1,0 +1,207 @@
+openapi: 3.0.3
+info:
+  title: User Service API
+  description: Управление пользователями, анкетами репетиторов и заявками учеников.
+  version: 1.0.0
+servers:
+  - url: http://api-gateway/api
+    description: Внешний доступ (через Gateway)
+  - url: http://user-service/internal
+    description: Внутренний доступ
+
+paths:
+  # --- ПУБЛИЧНЫЕ ЭНДПОИНТЫ (Клиент) ---
+  /v1/profiles:
+    post:
+      tags: [public]
+      summary: Создать анкету репетитора
+      parameters:
+        - in: header
+          name: Idempotency-Key
+          required: true
+          schema: { type: string, format: uuid }
+          description: Ключ для защиты от дублирования анкет
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TutorProfileCreate' }
+      responses:
+        '201': { description: Анкета создана }
+        '400': { $ref: '#/components/responses/BadRequest' }
+
+  /v1/profiles/{id}:
+    get:
+      tags: [public]
+      summary: Получить анкету репетитора по ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Данные анкеты
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TutorProfileResponse' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+
+  /v1/profiles/search:
+    get:
+      tags: [public]
+      summary: Поиск анкет репетиторов (список)
+      parameters:
+        - in: query
+          name: subject
+          schema: { type: string }
+        - in: query
+          name: page
+          schema: { type: integer, default: 1 }
+        - in: query
+          name: size
+          schema: { type: integer, default: 20 }
+      responses:
+        '200':
+          description: Список анкет (с пагинацией)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/TutorProfileResponse' }
+                  total: { type: integer }
+        '400': { $ref: '#/components/responses/BadRequest' }
+
+  /v1/requests:
+    post:
+      tags: [public]
+      summary: Создать заявку ученика
+      parameters:
+        - in: header
+          name: Idempotency-Key
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/StudentRequestCreate' }
+      responses:
+        '201': { description: Заявка создана }
+        '400': { $ref: '#/components/responses/BadRequest' }
+
+  /v1/requests/{id}:
+    patch:
+      tags: [public]
+      summary: Обновить заявку ученика
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/StudentRequestCreate' }
+      responses:
+        '200': { description: Заявка обновлена }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  # --- ВНУТРЕННИЕ ЭНДПОИНТЫ (Для других сервисов) ---
+  /internal/v1/users/{id}:
+    get:
+      tags: [internal]
+      summary: Получить базовые данные пользователя (для chat, lesson, scheduling)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200': { description: Данные пользователя }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /internal/v1/profiles/{id}:
+    get:
+      tags: [internal]
+      summary: Получить анкету репетитора (для matching, verification)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200': { description: Данные анкеты }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /internal/v1/requests/{id}:
+    get:
+      tags: [internal]
+      summary: Получить заявку ученика (для matching)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200': { description: Данные заявки }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /internal/v1/profiles:
+    get:
+      tags: [internal]
+      summary: Получить список всех анкет (для matching-service)
+      responses:
+        '200': { description: Список анкет }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+components:
+  schemas:
+    TutorProfileCreate:
+      type: object
+      required: [subject, price]
+      properties:
+        subject: { type: string }
+        price: { type: integer }
+        description: { type: string }
+    TutorProfileResponse:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        subject: { type: string }
+        price: { type: integer }
+        rating: { type: number }
+    StudentRequestCreate:
+      type: object
+      required: [subject, level]
+      properties:
+        subject: { type: string }
+        level: { type: string }
+        goal: { type: string }
+        text: { type: string }
+    # --- ЕДИНАЯ МОДЕЛЬ ОШИБКИ ---
+    Problem:
+      type: object
+      properties:
+        type: { type: string, format: uri }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+  responses:
+    BadRequest:
+      description: Ошибка валидации
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    NotFound:
+      description: Не найдено
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }

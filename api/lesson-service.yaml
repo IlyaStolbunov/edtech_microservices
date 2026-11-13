@@ -1,0 +1,67 @@
+openapi: 3.0.3
+info:
+  title: Lesson Service API
+  version: 1.0.0
+servers:
+  - url: http://api-gateway/api
+
+paths:
+  /v1/sessions/{lessonId}/join:
+    post:
+      tags: [public]
+      summary: Получить токен для подключения к видеоуроку
+      description: Возвращает roomId и JWT-токен для Jitsi.
+      parameters:
+        - in: path
+          name: lessonId
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Данные для подключения
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  roomId: { type: string }
+                  token: { type: string }
+                  jitsiDomain: { type: string }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /v1/sessions/{lessonId}/leave:
+    post:
+      tags: [public]
+      summary: Выйти из видеоурока
+      parameters:
+        - in: path
+          name: lessonId
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '204': { description: Успешный выход }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+components:
+  schemas:
+    Problem:
+      type: object
+      properties:
+        type: { type: string, format: uri, example: "https://api.example.com/errors/validation" }
+        title: { type: string, example: "Bad Request" }
+        status: { type: integer, example: 400 }
+        detail: { type: string, example: "Ошибка валидации данных" }
+  
+  responses:
+    BadRequest:
+      description: Ошибка валидации
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    NotFound:
+      description: Не найдено
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }

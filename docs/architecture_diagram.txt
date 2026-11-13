@@ -1,0 +1,92 @@
+flowchart TB
+    Web["Web Client"]
+    Gateway["API Gateway"]
+    KC["Keycloak"]
+
+    User["user-service"]
+    Match["matching-service"]
+    Verif["verification-service"]
+    Chat["chat-service"]
+    Sched["scheduling-service"]
+    Lesson["lesson-service"]
+    Rev["reviews-service"]
+    Notif["notification-service"]
+
+    Kafka["Apache Kafka"]
+
+    Giga["GigaChat API"]
+    Jitsi["Jitsi Meet"]
+    Uni["Unisender / Web Push"]
+
+    %% --- Синхронные взаимодействия (Сплошные линии) ---
+    Web -->|HTTPS| Gateway
+    Gateway -.->|"POST /token/introspect"| KC
+
+    Gateway -->|"GET /api/v1/profiles/{id}"| User
+    Gateway -->|"GET /api/v1/recommendations/tutors?requestId=..."| Match
+    Gateway -->|"POST /api/v1/verification/start"| Verif
+    Gateway -->|"POST /api/v1/chats"| Chat
+    Gateway -->|"POST /api/v1/lessons"| Sched
+    Gateway -->|"POST /api/v1/sessions/{id}/join"| Lesson
+    Gateway -->|"POST /api/v1/reviews"| Rev
+
+    Match -->|"GET /internal/v1/profiles"| User
+    Match -->|"GET /internal/v1/ratings/{tutorId}"| Rev
+    Match -->|"GET /internal/v1/badges/{tutorId}"| Verif
+    
+    Sched -->|"GET /internal/v1/users/{id}"| User
+    Sched -->|"GET /internal/v1/chats/check"| Chat
+    
+    Lesson -->|"GET /internal/v1/lessons/{id}"| Sched
+    Lesson -->|"GET /internal/v1/users/{id}"| User
+    
+    Rev -->|"GET /internal/v1/lessons/{id}"| Sched
+    
+    Verif -->|"GET /internal/v1/profiles/{id}"| User
+    
+    Chat -->|"GET /internal/v1/users/{id}"| User
+    
+    Verif -->|"POST /chat/completions"| Giga
+    Lesson -->|"POST /rooms"| Jitsi
+    Notif -->|"POST /email"| Uni
+
+    %% --- Real-time взаимодействия (WebSockets) ---
+    Gateway -.->|"WS /ws/chats/{id}"| Chat
+    Gateway -.->|"WS /ws/sessions/{id}/board"| Lesson
+
+    %% --- Асинхронные взаимодействия (Пунктирные линии к Kafka) ---
+    User -.->|"UserCreated, UserUpdated, UserDeleted,<br/>TutorProfileCreated, TutorProfileUpdated,<br/>StudentRequestCreated, StudentRequestUpdated,<br/>StudentRequestDeleted"| Kafka
+    Verif -.->|"TestGenerated, TestStarted, TestCompleted,<br/>TestPassed, TestFailed, BadgeIssued"| Kafka
+    Sched -.->|"LessonProposed, LessonConfirmed,<br/>LessonCancelled, LessonCompleted,<br/>ReminderScheduled"| Kafka
+    Lesson -.->|"SessionReady, SessionFailed, SessionEnded"| Kafka
+    Chat -.->|"ChatCreated, MessageSent, MessageRead"| Kafka
+    Rev -.->|"ReviewCreated, RatingCalculated, RatingUpdated"| Kafka
+
+    %% --- Асинхронные взаимодействия (Пунктирные линии от Kafka) ---
+    Kafka -.->|"TutorProfileCreated, TutorProfileUpdated,<br/>StudentRequestCreated, StudentRequestUpdated,<br/>StudentRequestDeleted, UserDeleted,<br/>BadgeIssued, RatingUpdated"| Match
+    
+    Kafka -.->|"UserDeleted"| Sched
+    Kafka -.->|"SessionReady, SessionFailed, SessionEnded"| Sched
+    
+    Kafka -.->|"UserDeleted, UserUpdated"| Chat
+    
+    Kafka -.->|"LessonConfirmed"| Lesson
+    
+    Kafka -.->|"LessonCompleted"| Rev
+    
+    Kafka -.->|"BadgeIssued, RatingUpdated"| User
+    
+    Kafka -.->|"UserCreated, UserUpdated,<br/>LessonProposed, LessonConfirmed,<br/>LessonCancelled, LessonCompleted,<br/>ReminderScheduled, SessionReady,<br/>SessionFailed, MessageSent, ReviewCreated"| Notif
+
+    %% --- Стили ---
+    classDef clientStyle fill:#fef3c7,stroke:#d97706
+    classDef edgeStyle fill:#dbeafe,stroke:#2563eb
+    classDef serviceStyle fill:#dcfce7,stroke:#16a34a
+    classDef kafkaStyle fill:#f3e8ff,stroke:#9333ea,stroke-width:3px
+    classDef extStyle fill:#fee2e2,stroke:#dc2626
+
+    class Web clientStyle
+    class Gateway,KC edgeStyle
+    class User,Match,Verif,Chat,Sched,Lesson,Rev,Notif serviceStyle
+    class Kafka kafkaStyle
+    class Giga,Jitsi,Uni extStyle

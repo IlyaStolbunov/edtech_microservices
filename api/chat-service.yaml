@@ -1,0 +1,109 @@
+openapi: 3.0.3
+info:
+  title: Chat Service API
+  version: 1.0.0
+servers:
+  - url: http://api-gateway/api
+
+paths:
+  /v1/chats:
+    post:
+      tags: [public]
+      summary: Создать чат (или получить существующий)
+      parameters:
+        - in: header
+          name: Idempotency-Key
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                recipientId: { type: string, format: uuid }
+      responses:
+        '201': { description: Чат создан }
+        '400': { $ref: '#/components/responses/BadRequest' }
+    get:
+      tags: [public]
+      summary: Получить список чатов пользователя
+      parameters:
+        - in: query
+          name: page
+          schema: { type: integer, default: 1 }
+        - in: query
+          name: size
+          schema: { type: integer, default: 20 }
+      responses:
+        '200': { description: Список чатов }
+        '400': { $ref: '#/components/responses/BadRequest' }
+
+  /v1/chats/{id}/messages:
+    get:
+      tags: [public]
+      summary: Получить историю сообщений чата
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+        - in: query
+          name: page
+          schema: { type: integer, default: 1 }
+        - in: query
+          name: size
+          schema: { type: integer, default: 50 }
+      responses:
+        '200': { description: Список сообщений }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /internal/v1/chats/check:
+    get:
+      tags: [internal]
+      summary: Проверить наличие чата между пользователями
+      description: Используется сервисом scheduling-service
+      parameters:
+        - in: query
+          name: userA
+          required: true
+          schema: { type: string, format: uuid }
+        - in: query
+          name: userB
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Результат проверки
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  exists: { type: boolean }
+                  chatId: { type: string, format: uuid }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+components:
+  schemas:
+    Problem:
+      type: object
+      properties:
+        type: { type: string, format: uri, example: "https://api.example.com/errors/validation" }
+        title: { type: string, example: "Bad Request" }
+        status: { type: integer, example: 400 }
+        detail: { type: string, example: "Ошибка валидации данных" }
+  
+  responses:
+    BadRequest:
+      description: Ошибка валидации
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    NotFound:
+      description: Не найдено
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }

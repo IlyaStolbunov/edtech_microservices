@@ -1,0 +1,92 @@
+flowchart TB
+    Web["Web Client"]
+    Gateway["API Gateway"]
+    KC["Keycloak"]
+
+    User["user-service"]
+    Match["matching-service"]
+    Verif["verification-service"]
+    Chat["chat-service"]
+    Sched["scheduling-service"]
+    Lesson["lesson-service"]
+    Rev["reviews-service"]
+    Notif["notification-service"]
+
+    Kafka["Apache Kafka"]
+
+    Giga["GigaChat API"]
+    Jitsi["Jitsi Meet"]
+    Uni["Unisender / Web Push"]
+
+    %% --- Синхронные взаимодействия (Сплошные линии) ---
+    Web --> Gateway
+    Gateway -.-> KC
+
+    Gateway --> User
+    Gateway --> Match
+    Gateway --> Verif
+    Gateway --> Chat
+    Gateway --> Sched
+    Gateway --> Lesson
+    Gateway --> Rev
+
+    Match --> User
+    Match --> Rev
+    Match --> Verif
+    
+    Sched --> User
+    Sched --> Chat
+    
+    Lesson --> Sched
+    Lesson --> User
+    
+    Rev --> Sched
+    
+    Verif --> User
+    
+    Chat --> User
+    
+    Verif --> Giga
+    Lesson --> Jitsi
+    Notif --> Uni
+
+    %% --- Real-time взаимодействия (WebSockets) ---
+    Gateway -.-> Chat
+    Gateway -.-> Lesson
+
+    %% --- Асинхронные взаимодействия (Пунктирные линии к Kafka) ---
+    User -.-> Kafka
+    Verif -.-> Kafka
+    Sched -.-> Kafka
+    Lesson -.-> Kafka
+    Chat -.-> Kafka
+    Rev -.-> Kafka
+
+    %% --- Асинхронные взаимодействия (Пунктирные линии от Kafka) ---
+    Kafka -.-> Match
+    
+    Kafka -.-> Sched
+    Kafka -.-> Sched
+    
+    Kafka -.-> Chat
+    
+    Kafka -.-> Lesson
+    
+    Kafka -.-> Rev
+    
+    Kafka -.-> User
+    
+    Kafka -.-> Notif
+
+    %% --- Стили ---
+    classDef clientStyle fill:#fef3c7,stroke:#d97706
+    classDef edgeStyle fill:#dbeafe,stroke:#2563eb
+    classDef serviceStyle fill:#dcfce7,stroke:#16a34a
+    classDef kafkaStyle fill:#f3e8ff,stroke:#9333ea,stroke-width:3px
+    classDef extStyle fill:#fee2e2,stroke:#dc2626
+
+    class Web clientStyle
+    class Gateway,KC edgeStyle
+    class User,Match,Verif,Chat,Sched,Lesson,Rev,Notif serviceStyle
+    class Kafka kafkaStyle
+    class Giga,Jitsi,Uni extStyle

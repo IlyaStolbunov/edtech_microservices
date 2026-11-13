@@ -1,0 +1,464 @@
+asyncapi: '2.6.0'
+info:
+  title: EdTech Platform - Event API
+  version: '1.0.0'
+  description: |
+    Описание асинхронных событий (Kafka) для платформы поиска репетиторов.
+    Все события передаются в формате EventEnvelope.
+
+servers:
+  production:
+    url: kafka:9092
+    protocol: kafka
+    description: Брокер сообщений Kafka
+
+channels:
+  # === ТОПИК 1: USER EVENTS ===
+  user.events:
+    description: События, связанные с пользователями, анкетами и заявками.
+    publish:
+      operationId: publishUserEvent
+      message:
+        oneOf:
+          - $ref: '#/components/messages/UserCreated'
+          - $ref: '#/components/messages/UserUpdated'
+          - $ref: '#/components/messages/UserDeleted'
+          - $ref: '#/components/messages/TutorProfileCreated'
+          - $ref: '#/components/messages/TutorProfileUpdated'
+          - $ref: '#/components/messages/StudentRequestCreated'
+          - $ref: '#/components/messages/StudentRequestUpdated'
+          - $ref: '#/components/messages/StudentRequestDeleted'
+
+  # === ТОПИК 2: VERIFICATION EVENTS ===
+  verification.events:
+    description: События верификации навыков.
+    publish:
+      operationId: publishVerificationEvent
+      message:
+        oneOf:
+          - $ref: '#/components/messages/BadgeIssued'
+
+  # === ТОПИК 3: SCHEDULING EVENTS ===
+  scheduling.events:
+    description: События расписания и занятий.
+    publish:
+      operationId: publishSchedulingEvent
+      message:
+        oneOf:
+          - $ref: '#/components/messages/LessonProposed'
+          - $ref: '#/components/messages/LessonConfirmed'
+          - $ref: '#/components/messages/LessonCancelled'
+          - $ref: '#/components/messages/LessonCompleted'
+          - $ref: '#/components/messages/ReminderScheduled'
+
+  # === ТОПИК 4: LESSON EVENTS ===
+  lesson.events:
+    description: События проведения видеоуроков.
+    publish:
+      operationId: publishLessonEvent
+      message:
+        oneOf:
+          - $ref: '#/components/messages/SessionReady'
+          - $ref: '#/components/messages/SessionFailed'
+          - $ref: '#/components/messages/SessionEnded'
+
+  # === ТОПИК 5: CHAT EVENTS ===
+  chat.events:
+    description: События чата.
+    publish:
+      operationId: publishChatEvent
+      message:
+        oneOf:
+          - $ref: '#/components/messages/MessageSent'
+
+  # === ТОПИК 6: REVIEWS EVENTS ===
+  reviews.events:
+    description: События отзывов и рейтинга.
+    publish:
+      operationId: publishReviewEvent
+      message:
+        oneOf:
+          - $ref: '#/components/messages/ReviewCreated'
+          - $ref: '#/components/messages/RatingUpdated'
+
+components:
+  messages:
+    # --- USER MESSAGES ---
+    UserCreated:
+      name: UserCreated
+      title: Пользователь создан
+      summary: Отправляется после регистрации
+      contentType: application/json
+      payload: { $ref: '#/components/schemas/UserCreatedPayload' }
+      tags: [{ name: user-service, description: Publisher }]
+    
+    UserUpdated:
+      name: UserUpdated
+      title: Профиль обновлен
+      summary: Смена имени, email или аватара
+      payload: { $ref: '#/components/schemas/UserUpdatedPayload' }
+      tags: [{ name: user-service, description: Publisher }]
+
+    UserDeleted:
+      name: UserDeleted
+      title: Пользователь удален
+      summary: Каскадное удаление данных пользователя
+      payload: { $ref: '#/components/schemas/UserDeletedPayload' }
+      tags: [{ name: user-service, description: Publisher }]
+
+    TutorProfileCreated:
+      name: TutorProfileCreated
+      title: Анкета создана
+      payload: { $ref: '#/components/schemas/TutorProfileCreatedPayload' }
+      tags: [{ name: user-service, description: Publisher }]
+
+    TutorProfileUpdated:
+      name: TutorProfileUpdated
+      title: Анкета обновлена
+      payload: { $ref: '#/components/schemas/TutorProfileUpdatedPayload' }
+      tags: [{ name: user-service, description: Publisher }]
+
+    StudentRequestCreated:
+      name: StudentRequestCreated
+      title: Заявка создана
+      payload: { $ref: '#/components/schemas/StudentRequestCreatedPayload' }
+      tags: [{ name: user-service, description: Publisher }]
+
+    StudentRequestUpdated:
+      name: StudentRequestUpdated
+      title: Заявка обновлена
+      payload: { $ref: '#/components/schemas/StudentRequestUpdatedPayload' }
+      tags: [{ name: user-service, description: Publisher }]
+
+    StudentRequestDeleted:
+      name: StudentRequestDeleted
+      title: Заявка удалена
+      payload: { $ref: '#/components/schemas/StudentRequestDeletedPayload' }
+      tags: [{ name: user-service, description: Publisher }]
+
+    # --- VERIFICATION MESSAGES ---
+
+    BadgeIssued:
+      name: BadgeIssued
+      title: Бейдж выдан
+      payload: { $ref: '#/components/schemas/BadgeIssuedPayload' }
+      tags: [{ name: verification-service, description: Publisher }]
+
+    # --- SCHEDULING MESSAGES ---
+    LessonProposed:
+      name: LessonProposed
+      title: Занятие предложено
+      payload: { $ref: '#/components/schemas/LessonProposedPayload' }
+      tags: [{ name: scheduling-service, description: Publisher }]
+
+    LessonConfirmed:
+      name: LessonConfirmed
+      title: Занятие подтверждено
+      payload: { $ref: '#/components/schemas/LessonConfirmedPayload' }
+      tags: [{ name: scheduling-service, description: Publisher }]
+
+    LessonCancelled:
+      name: LessonCancelled
+      title: Занятие отменено
+      payload: { $ref: '#/components/schemas/LessonCancelledPayload' }
+      tags: [{ name: scheduling-service, description: Publisher }]
+
+    LessonCompleted:
+      name: LessonCompleted
+      title: Занятие завершено
+      payload: { $ref: '#/components/schemas/LessonCompletedPayload' }
+      tags: [{ name: scheduling-service, description: Publisher }]
+
+    ReminderScheduled:
+      name: ReminderScheduled
+      title: Напоминание запланировано
+      payload: { $ref: '#/components/schemas/ReminderScheduledPayload' }
+      tags: [{ name: scheduling-service, description: Publisher }]
+
+    # --- LESSON MESSAGES ---
+    SessionReady:
+      name: SessionReady
+      title: Комната готова
+      payload: { $ref: '#/components/schemas/SessionReadyPayload' }
+      tags: [{ name: lesson-service, description: Publisher }]
+
+    SessionFailed:
+      name: SessionFailed
+      title: Ошибка создания комнаты
+      payload: { $ref: '#/components/schemas/SessionFailedPayload' }
+      tags: [{ name: lesson-service, description: Publisher }]
+
+    SessionEnded:
+      name: SessionEnded
+      title: Сессия завершена
+      payload: { $ref: '#/components/schemas/SessionEndedPayload' }
+      tags: [{ name: lesson-service, description: Publisher }]
+
+    # --- CHAT MESSAGES ---
+
+    MessageSent:
+      name: MessageSent
+      title: Сообщение отправлено
+      payload: { $ref: '#/components/schemas/MessageSentPayload' }
+      tags: [{ name: chat-service, description: Publisher }]
+
+    # --- REVIEWS MESSAGES ---
+    ReviewCreated:
+      name: ReviewCreated
+      title: Отзыв создан
+      payload: { $ref: '#/components/schemas/ReviewCreatedPayload' }
+      tags: [{ name: reviews-service, description: Publisher }]
+
+    RatingUpdated:
+      name: RatingUpdated
+      title: Рейтинг обновлен
+      payload: { $ref: '#/components/schemas/RatingUpdatedPayload' }
+      tags: [{ name: reviews-service, description: Publisher }]
+
+  schemas:
+    # Базовый конверт, который наследуют все события
+    EventEnvelope:
+      type: object
+      required: [eventId, eventType, occurredAt, schemaVersion, payload]
+      properties:
+        eventId: { type: string, format: uuid, description: "Уникальный ID события" }
+        eventType: { type: string, description: "Тип события" }
+        occurredAt: { type: string, format: date-time, description: "Время возникновения" }
+        schemaVersion: { type: integer, example: 1, description: "Версия схемы" }
+        payload: { type: object, description: "Полезная нагрузка" }
+
+    # Примеры Payloads (все наследуют EventEnvelope)
+    UserCreatedPayload:
+      allOf:
+        - $ref: '#/components/schemas/EventEnvelope'
+        - type: object
+          properties:
+            eventType: { enum: [UserCreated] }
+            payload:
+              type: object
+              properties:
+                userId: { type: string, format: uuid }
+                email: { type: string, format: email }
+                role: { type: string, enum: [student, tutor] }
+    
+    UserUpdatedPayload:
+      allOf:
+        - $ref: '#/components/schemas/EventEnvelope'
+        - type: object
+          properties:
+            eventType: { enum: [UserUpdated] }
+            payload:
+              type: object
+              properties:
+                userId: { type: string, format: uuid }
+    
+    UserDeletedPayload:
+      allOf:
+        - $ref: '#/components/schemas/EventEnvelope'
+        - type: object
+          properties:
+            eventType: { enum: [UserDeleted] }
+            payload:
+              type: object
+              properties:
+                userId: { type: string, format: uuid }
+
+    TutorProfileCreatedPayload:
+      allOf:
+        - $ref: '#/components/schemas/EventEnvelope'
+        - type: object
+          properties:
+            eventType: { enum: [TutorProfileCreated] }
+            payload:
+              type: object
+              properties:
+                tutorId: { type: string, format: uuid }
+                subject: { type: string }
+
+    TutorProfileUpdatedPayload:
+      allOf:
+        - $ref: '#/components/schemas/EventEnvelope'
+        - type: object
+          properties:
+            eventType: { enum: [TutorProfileUpdated] }
+            payload:
+              type: object
+              properties:
+                tutorId: { type: string, format: uuid }
+
+    StudentRequestCreatedPayload:
+      allOf:
+        - $ref: '#/components/schemas/EventEnvelope'
+        - type: object
+          properties:
+            eventType: { enum: [StudentRequestCreated] }
+            payload:
+              type: object
+              properties:
+                requestId: { type: string, format: uuid }
+                studentId: { type: string, format: uuid }
+
+    StudentRequestUpdatedPayload:
+      allOf:
+        - $ref: '#/components/schemas/EventEnvelope'
+        - type: object
+          properties:
+            eventType: { enum: [StudentRequestUpdated] }
+            payload:
+              type: object
+              properties:
+                requestId: { type: string, format: uuid }
+
+    StudentRequestDeletedPayload:
+      allOf:
+        - $ref: '#/components/schemas/EventEnvelope'
+        - type: object
+          properties:
+            eventType: { enum: [StudentRequestDeleted] }
+            payload:
+              type: object
+              properties:
+                requestId: { type: string, format: uuid }
+
+    BadgeIssuedPayload:
+      allOf:
+        - $ref: '#/components/schemas/EventEnvelope'
+        - type: object
+          properties:
+            eventType: { enum: [BadgeIssued] }
+            payload:
+              type: object
+              properties:
+                tutorId: { type: string, format: uuid }
+                badgeId: { type: string, format: uuid }
+
+    LessonProposedPayload:
+      allOf:
+        - $ref: '#/components/schemas/EventEnvelope'
+        - type: object
+          properties:
+            eventType: { enum: [LessonProposed] }
+            payload:
+              type: object
+              properties:
+                lessonId: { type: string, format: uuid }
+
+    LessonConfirmedPayload:
+      allOf:
+        - $ref: '#/components/schemas/EventEnvelope'
+        - type: object
+          properties:
+            eventType: { enum: [LessonConfirmed] }
+            payload:
+              type: object
+              properties:
+                lessonId: { type: string, format: uuid }
+                startTime: { type: string, format: date-time }
+
+    LessonCancelledPayload:
+      allOf:
+        - $ref: '#/components/schemas/EventEnvelope'
+        - type: object
+          properties:
+            eventType: { enum: [LessonCancelled] }
+            payload:
+              type: object
+              properties:
+                lessonId: { type: string, format: uuid }
+                reason: { type: string }
+
+    LessonCompletedPayload:
+      allOf:
+        - $ref: '#/components/schemas/EventEnvelope'
+        - type: object
+          properties:
+            eventType: { enum: [LessonCompleted] }
+            payload:
+              type: object
+              properties:
+                lessonId: { type: string, format: uuid }
+
+    ReminderScheduledPayload:
+      allOf:
+        - $ref: '#/components/schemas/EventEnvelope'
+        - type: object
+          properties:
+            eventType: { enum: [ReminderScheduled] }
+            payload:
+              type: object
+              properties:
+                lessonId: { type: string, format: uuid }
+                remindAt: { type: string, format: date-time }
+
+    SessionReadyPayload:
+      allOf:
+        - $ref: '#/components/schemas/EventEnvelope'
+        - type: object
+          properties:
+            eventType: { enum: [SessionReady] }
+            payload:
+              type: object
+              properties:
+                lessonId: { type: string, format: uuid }
+                roomId: { type: string }
+
+    SessionFailedPayload:
+      allOf:
+        - $ref: '#/components/schemas/EventEnvelope'
+        - type: object
+          properties:
+            eventType: { enum: [SessionFailed] }
+            payload:
+              type: object
+              properties:
+                lessonId: { type: string, format: uuid }
+                reason: { type: string }
+
+    SessionEndedPayload:
+      allOf:
+        - $ref: '#/components/schemas/EventEnvelope'
+        - type: object
+          properties:
+            eventType: { enum: [SessionEnded] }
+            payload:
+              type: object
+              properties:
+                lessonId: { type: string, format: uuid }
+
+    MessageSentPayload:
+      allOf:
+        - $ref: '#/components/schemas/EventEnvelope'
+        - type: object
+          properties:
+            eventType: { enum: [MessageSent] }
+            payload:
+              type: object
+              properties:
+                chatId: { type: string, format: uuid }
+                messageId: { type: string, format: uuid }
+                senderId: { type: string, format: uuid }
+
+    ReviewCreatedPayload:
+      allOf:
+        - $ref: '#/components/schemas/EventEnvelope'
+        - type: object
+          properties:
+            eventType: { enum: [ReviewCreated] }
+            payload:
+              type: object
+              properties:
+                reviewId: { type: string, format: uuid }
+                tutorId: { type: string, format: uuid }
+                rating: { type: integer }
+
+    RatingUpdatedPayload:
+      allOf:
+        - $ref: '#/components/schemas/EventEnvelope'
+        - type: object
+          properties:
+            eventType: { enum: [RatingUpdated] }
+            payload:
+              type: object
+              properties:
+                tutorId: { type: string, format: uuid }
+                newAverageRating: { type: number }

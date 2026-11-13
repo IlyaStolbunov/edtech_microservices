@@ -1,0 +1,128 @@
+openapi: 3.0.3
+info:
+  title: Scheduling Service API
+  version: 1.0.0
+servers:
+  - url: http://api-gateway/api
+
+paths:
+  /v1/slots:
+    post:
+      tags: [public]
+      summary: Добавить слот в расписание
+      parameters:
+        - in: header
+          name: Idempotency-Key
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                dayOfWeek: { type: integer }
+                startTime: { type: string, format: time }
+                endTime: { type: string, format: time }
+      responses:
+        '201': { description: Слот создан }
+        '400': { $ref: '#/components/responses/BadRequest' }
+
+  /v1/lessons:
+    post:
+      tags: [public]
+      summary: Предложить занятие
+      parameters:
+        - in: header
+          name: Idempotency-Key
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                chatId: { type: string, format: uuid }
+                startTime: { type: string, format: date-time }
+      responses:
+        '201': { description: Занятие предложено (pending) }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    get:
+      tags: [public]
+      summary: Получить список занятий пользователя
+      parameters:
+        - in: query
+          name: page
+          schema: { type: integer, default: 1 }
+        - in: query
+          name: size
+          schema: { type: integer, default: 20 }
+      responses:
+        '200': { description: Список занятий }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '409': 
+          description: Конфликт (время уже занято)
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
+
+  /v1/lessons/{id}:
+    patch:
+      tags: [public]
+      summary: Изменить статус занятия (подтвердить/отменить)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status: 
+                  type: string
+                  enum: [scheduled, cancelled, completed]
+      responses:
+        '200': { description: Статус обновлен }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /internal/v1/lessons/{id}:
+    get:
+      tags: [internal]
+      summary: Получить данные занятия (для lesson и reviews)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200': { description: Данные занятия }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+components:
+  schemas:
+    Problem:
+      type: object
+      properties:
+        type: { type: string, format: uri, example: "https://api.example.com/errors/validation" }
+        title: { type: string, example: "Bad Request" }
+        status: { type: integer, example: 400 }
+        detail: { type: string, example: "Ошибка валидации данных" }
+  
+  responses:
+    BadRequest:
+      description: Ошибка валидации
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    NotFound:
+      description: Не найдено
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }

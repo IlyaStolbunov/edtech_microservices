@@ -1,0 +1,84 @@
+openapi: 3.0.3
+info:
+  title: Matching Service API
+  version: 1.0.0
+servers:
+  - url: http://api-gateway/api
+
+paths:
+  /v1/recommendations/tutors:
+    get:
+      tags: [public]
+      summary: Получить рекомендованных репетиторов для заявки
+      parameters:
+        - in: query
+          name: requestId
+          required: true
+          schema: { type: string, format: uuid }
+          description: ID заявки ученика
+        - in: query
+          name: page
+          schema: { type: integer, default: 1 }
+        - in: query
+          name: size
+          schema: { type: integer, default: 10 }
+      responses:
+        '200':
+          description: Список репетиторов с процентами совместимости
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        tutorId: { type: string }
+                        compatibilityScore: { type: number, description: "От 0 до 1" }
+                  total: { type: integer }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /v1/recommendations/requests:
+    get:
+      tags: [public]
+      summary: Получить рекомендованные заявки учеников для репетитора
+      parameters:
+        - in: query
+          name: tutorId
+          required: true
+          schema: { type: string, format: uuid }
+        - in: query
+          name: page
+          schema: { type: integer, default: 1 }
+        - in: query
+          name: size
+          schema: { type: integer, default: 10 }
+      responses:
+        '200': { description: Список заявок }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+components:
+  schemas:
+    Problem:
+      type: object
+      properties:
+        type: { type: string, format: uri, example: "https://api.example.com/errors/validation" }
+        title: { type: string, example: "Bad Request" }
+        status: { type: integer, example: 400 }
+        detail: { type: string, example: "Ошибка валидации данных" }
+  
+  responses:
+    BadRequest:
+      description: Ошибка валидации
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    NotFound:
+      description: Не найдено
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
