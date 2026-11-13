@@ -10,7 +10,7 @@ servers:
     description: Внутренний доступ
 
 paths:
-  # --- ПУБЛИЧНЫЕ ЭНДПОИНТЫ (Клиент) ---
+  # Публичные эндпоинты
   /v1/profiles:
     post:
       tags: [public]
@@ -110,7 +110,7 @@ paths:
         '400': { $ref: '#/components/responses/BadRequest' }
         '404': { $ref: '#/components/responses/NotFound' }
 
-  # --- ВНУТРЕННИЕ ЭНДПОИНТЫ (Для других сервисов) ---
+  # Внутренние эндпоинты
   /internal/v1/users/{id}:
     get:
       tags: [internal]
@@ -186,7 +186,8 @@ components:
         level: { type: string }
         goal: { type: string }
         text: { type: string }
-    # --- ЕДИНАЯ МОДЕЛЬ ОШИБКИ ---
+        
+    # Единая модель ошибки
     Problem:
       type: object
       properties:
