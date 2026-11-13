@@ -13,7 +13,7 @@ servers:
     description: Брокер сообщений Kafka
 
 channels:
-  # === ТОПИК 1: USER EVENTS ===
+  # Топик 1: user
   user.events:
     description: События, связанные с пользователями, анкетами и заявками.
     publish:
@@ -29,7 +29,7 @@ channels:
           - $ref: '#/components/messages/StudentRequestUpdated'
           - $ref: '#/components/messages/StudentRequestDeleted'
 
-  # === ТОПИК 2: VERIFICATION EVENTS ===
+  # Топик 2: verification
   verification.events:
     description: События верификации навыков.
     publish:
@@ -38,7 +38,7 @@ channels:
         oneOf:
           - $ref: '#/components/messages/BadgeIssued'
 
-  # === ТОПИК 3: SCHEDULING EVENTS ===
+  # Топик 3: scheduling
   scheduling.events:
     description: События расписания и занятий.
     publish:
@@ -51,7 +51,7 @@ channels:
           - $ref: '#/components/messages/LessonCompleted'
           - $ref: '#/components/messages/ReminderScheduled'
 
-  # === ТОПИК 4: LESSON EVENTS ===
+  # Топик 4: lesson
   lesson.events:
     description: События проведения видеоуроков.
     publish:
@@ -62,7 +62,7 @@ channels:
           - $ref: '#/components/messages/SessionFailed'
           - $ref: '#/components/messages/SessionEnded'
 
-  # === ТОПИК 5: CHAT EVENTS ===
+  # Топик 5: chat
   chat.events:
     description: События чата.
     publish:
@@ -71,7 +71,7 @@ channels:
         oneOf:
           - $ref: '#/components/messages/MessageSent'
 
-  # === ТОПИК 6: REVIEWS EVENTS ===
+  # Топик 6: reviews
   reviews.events:
     description: События отзывов и рейтинга.
     publish:
@@ -83,7 +83,7 @@ channels:
 
 components:
   messages:
-    # --- USER MESSAGES ---
+    # User Massages
     UserCreated:
       name: UserCreated
       title: Пользователь создан
@@ -136,7 +136,7 @@ components:
       payload: { $ref: '#/components/schemas/StudentRequestDeletedPayload' }
       tags: [{ name: user-service, description: Publisher }]
 
-    # --- VERIFICATION MESSAGES ---
+    # Verification Messages
 
     BadgeIssued:
       name: BadgeIssued
@@ -144,7 +144,7 @@ components:
       payload: { $ref: '#/components/schemas/BadgeIssuedPayload' }
       tags: [{ name: verification-service, description: Publisher }]
 
-    # --- SCHEDULING MESSAGES ---
+    # Scheduling Messages
     LessonProposed:
       name: LessonProposed
       title: Занятие предложено
@@ -175,7 +175,7 @@ components:
       payload: { $ref: '#/components/schemas/ReminderScheduledPayload' }
       tags: [{ name: scheduling-service, description: Publisher }]
 
-    # --- LESSON MESSAGES ---
+    # Lesson Messages
     SessionReady:
       name: SessionReady
       title: Комната готова
@@ -194,7 +194,7 @@ components:
       payload: { $ref: '#/components/schemas/SessionEndedPayload' }
       tags: [{ name: lesson-service, description: Publisher }]
 
-    # --- CHAT MESSAGES ---
+    # Chat Messages
 
     MessageSent:
       name: MessageSent
@@ -202,7 +202,7 @@ components:
       payload: { $ref: '#/components/schemas/MessageSentPayload' }
       tags: [{ name: chat-service, description: Publisher }]
 
-    # --- REVIEWS MESSAGES ---
+    # Reviews Messages
     ReviewCreated:
       name: ReviewCreated
       title: Отзыв создан
