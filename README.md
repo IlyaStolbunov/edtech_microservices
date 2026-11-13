@@ -207,7 +207,7 @@
 | Ответственность | Управление пользователями, анкетами репетиторов и заявками учеников. Векторизация текстов через SBERT для подбора. |
 | Владеет данными | User, TutorProfile, StudentRequest, Embedding |
 | **Предоставляет** | **Sync API:** GET /api/v1/profiles/{id}, POST /api/v1/profiles, POST /api/v1/requests, PATCH /api/v1/requests/{id}, GET /internal/v1/users/{id}, GET /internal/v1/profiles/{id}, GET /internal/v1/requests/{id}.<br>**События:** UserCreated, UserUpdated, UserDeleted, TutorProfileCreated, TutorProfileUpdated, StudentRequestCreated, StudentRequestUpdated, StudentRequestDeleted. |
-| **Зависит от** | **Sync:** — **Async:** подписан на BadgeIssued (от verification), RatingUpdated (от reviews). *(Примечание: регистрация через Keycloak происходит через вебхук или Gateway, Kafka здесь не используется)*. |
+| **Зависит от** | **Sync:** — **Async:** подписан на BadgeIssued (от verification), RatingUpdated (от reviews). |
 | Нефункциональные требования | Нагрузка: высокая (поиск профилей). Критичность: высокая. Задержка: \< 200 мс. Доступность: 99.9%. |
 | Обоснование границы | 1\. Единый домен «пользователь и его профиль» — высокая связность.<br>2\. Собственная логика векторизации.<br>3\. Источник истины для профилей — другие сервисы только читают. |
 
