@@ -195,6 +195,8 @@
 
 **События:** ReviewCreated, RatingCalculated, RatingUpdated.
 
+---
+
 **2 Список и описание сервисов**
 
 **Сервис 1: user-service**
